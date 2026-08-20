@@ -123,4 +123,43 @@ public class TodoServiceTests
         // Assert
         deleted.Should().BeFalse();
     }
+
+    [Fact]
+    public void ClearCompleted_MixedItems_RemovesOnlyCompletedAndReturnsCount()
+    {
+        // Arrange
+        var completed1 = _sut.Create(new CreateTodoRequest { Title = "Completed 1" });
+        var completed2 = _sut.Create(new CreateTodoRequest { Title = "Completed 2" });
+        var incomplete = _sut.Create(new CreateTodoRequest { Title = "Incomplete" });
+        _sut.Update(completed1.Id, new UpdateTodoRequest { Title = completed1.Title, IsCompleted = true });
+        _sut.Update(completed2.Id, new UpdateTodoRequest { Title = completed2.Title, IsCompleted = true });
+
+        // Act
+        var clearedCount = _sut.ClearCompleted();
+        var remaining = _sut.GetAll();
+
+        // Assert
+        clearedCount.Should().Be(2);
+        remaining.Should().ContainSingle(x => x.Id == incomplete.Id);
+        remaining.Should().NotContain(x => x.Id == completed1.Id);
+        remaining.Should().NotContain(x => x.Id == completed2.Id);
+        _auditLogger.Logs.Should().ContainSingle(log => log.Contains("Action: ClearedCompleted") && log.Contains(completed1.Id.ToString()));
+        _auditLogger.Logs.Should().ContainSingle(log => log.Contains("Action: ClearedCompleted") && log.Contains(completed2.Id.ToString()));
+    }
+
+    [Fact]
+    public void ClearCompleted_NoCompletedItems_ReturnsZeroAndKeepsAll()
+    {
+        // Arrange
+        var incomplete = _sut.Create(new CreateTodoRequest { Title = "Incomplete" });
+
+        // Act
+        var clearedCount = _sut.ClearCompleted();
+        var remaining = _sut.GetAll();
+
+        // Assert
+        clearedCount.Should().Be(0);
+        remaining.Should().ContainSingle(x => x.Id == incomplete.Id);
+        _auditLogger.Logs.Should().NotContain(log => log.Contains("Action: ClearedCompleted"));
+    }
 }
