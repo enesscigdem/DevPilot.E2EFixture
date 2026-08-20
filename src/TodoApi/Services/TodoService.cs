@@ -74,4 +74,15 @@ public class TodoService : ITodoService
         }
         return removed;
     }
+
+    public int ClearCompleted()
+    {
+        var completedItems = _items.Values.Where(x => x.IsCompleted).ToList();
+        foreach (var item in completedItems)
+        {
+            _items.TryRemove(item.Id, out _);
+            _auditLogger.LogAction("ClearedCompleted", item.Id);
+        }
+        return completedItems.Count;
+    }
 }

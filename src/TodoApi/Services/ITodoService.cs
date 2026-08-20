@@ -9,4 +9,5 @@ public interface ITodoService
     TodoItem Create(CreateTodoRequest request);
     bool Update(Guid id, UpdateTodoRequest request);
     bool Delete(Guid id);
+    int ClearCompleted();
 }
