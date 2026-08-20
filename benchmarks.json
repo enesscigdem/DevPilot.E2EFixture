@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "repository": "DevPilot.E2EFixture",
+  "version": "1.0.0",
+  "benchmarks": [
+    {
+      "level": 1,
+      "name": "ONE_TEST_FILE",
+      "taskTitle": "Add Regression Test for Non-Existent Todo Lookup",
+      "exactScope": "Add a single unit test method to tests/TodoApi.Tests/TodoServiceTests.cs verifying that calling TodoService.GetById with a non-existent Guid returns null.",
+      "expectedFiles": [
+        "tests/TodoApi.Tests/TodoServiceTests.cs"
+      ],
+      "forbiddenChanges": [
+        "src/TodoApi/**",
+        "tests/TodoApi.Tests/TodosControllerTests.cs",
+        "**/*.csproj"
+      ],
+      "acceptanceCriteria": [
+        "TodoServiceTests.cs contains a unit test invoking _sut.GetById(Guid.NewGuid())",
+        "The test asserts that the returned value is null",
+        "dotnet test passes cleanly with 14 passing tests",
+        "Exactly 1 file modified in git diff"
+      ]
+    },
+    {
+      "level": 2,
+      "name": "ONE_PRODUCTION_FILE",
+      "taskTitle": "Add DueDate Property to TodoItem Model",
+      "exactScope": "Add an optional DueDateUtc nullable DateTime? property to the TodoItem model with getter and setter.",
+      "expectedFiles": [
+        "src/TodoApi/Models/TodoItem.cs"
+      ],
+      "forbiddenChanges": [
+        "tests/**",
+        "src/TodoApi/Services/**",
+        "src/TodoApi/Controllers/**",
+        "**/*.csproj"
+      ],
+      "acceptanceCriteria": [
+        "TodoItem.cs contains public DateTime? DueDateUtc { get; set; }",
+        "dotnet build compiles with 0 errors and 0 warnings",
+        "dotnet test passes with 0 failures",
+        "Exactly 1 file modified in git diff"
+      ]
+    },
+    {
+      "level": 3,
+      "name": "PRODUCTION_AND_TEST",
+      "taskTitle": "Add GetCompletedCount Method and Unit Test",
+      "exactScope": "Add a GetCompletedCount() method to TodoService that returns the count of completed todos (IsCompleted == true), and add corresponding unit test coverage in TodoServiceTests.",
+      "expectedFiles": [
+        "src/TodoApi/Services/TodoService.cs",
+        "tests/TodoApi.Tests/TodoServiceTests.cs"
+      ],
+      "forbiddenChanges": [
+        "src/TodoApi/Services/ITodoService.cs",
+        "src/TodoApi/Controllers/**",
+        "src/TodoApi/Models/**",
+        "**/*.csproj"
+      ],
+      "acceptanceCriteria": [
+        "TodoService.cs contains public int GetCompletedCount() => _items.Values.Count(x => x.IsCompleted);",
+        "TodoServiceTests.cs contains unit tests asserting count for empty, mixed, and fully completed collections",
+        "dotnet test passes with 100% success rate",
+        "Exactly 2 files modified in git diff"
+      ]
+    },
+    {
+      "level": 4,
+      "name": "SMALL_MULTI_FILE_FEATURE",
+      "taskTitle": "Filter Todos by Completion Status",
+      "exactScope": "Implement filtering todos by completion status across interface, service implementation, controller endpoint, and test suite.",
+      "expectedFiles": [
+        "src/TodoApi/Services/ITodoService.cs",
+        "src/TodoApi/Services/TodoService.cs",
+        "src/TodoApi/Controllers/TodosController.cs",
+        "tests/TodoApi.Tests/TodoServiceTests.cs"
+      ],
+      "forbiddenChanges": [
+        "Creating new files or projects",
+        "Modifying TodoItem.cs or ITodoAuditLogger.cs",
+        "**/*.csproj"
+      ],
+      "acceptanceCriteria": [
+        "ITodoService declares IReadOnlyList<TodoItem> GetByStatus(bool isCompleted);",
+        "TodoService implements GetByStatus returning items where IsCompleted == isCompleted ordered by CreatedAtUtc",
+        "TodosController exposes a GET endpoint returning the filtered list with HTTP 200 OK",
+        "TodoServiceTests includes unit test assertions verifying GetByStatus for completed and pending items",
+        "dotnet test passes cleanly",
+        "Exactly 4 files modified in git diff"
+      ]
+    },
+    {
+      "level": 5,
+      "name": "EXISTING_DEPENDENCY",
+      "taskTitle": "Clear Completed Todos with Audit Logging",
+      "exactScope": "Add a method ClearCompleted() to TodoService that removes all completed todos and records an audit log entry for each deleted item using the existing ITodoAuditLogger dependency (LogAction(\"ClearedCompleted\", id)), with accompanying unit test in TodoServiceTests.",
+      "expectedFiles": [
+        "src/TodoApi/Services/ITodoService.cs",
+        "src/TodoApi/Services/TodoService.cs",
+        "tests/TodoApi.Tests/TodoServiceTests.cs"
+      ],
+      "forbiddenChanges": [
+        "src/TodoApi/Services/ITodoAuditLogger.cs",
+        "src/TodoApi/Services/TodoAuditLogger.cs",
+        "src/TodoApi/Controllers/**",
+        "**/*.csproj"
+      ],
+      "acceptanceCriteria": [
+        "ITodoService declares int ClearCompleted();",
+        "TodoService.ClearCompleted() removes completed items, calls _auditLogger.LogAction(\"ClearedCompleted\", item.Id) for each, and returns removed count",
+        "TodoServiceTests.cs asserts items are removed, active items stay, count is returned, and audit logs contain ClearedCompleted entries",
+        "dotnet test passes cleanly",
+        "Exactly 3 files modified in git diff"
+      ]
+    }
+  ]
+}
